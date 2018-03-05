@@ -1,0 +1,169 @@
+#!/usr/bin/python
+"""A [GNU Units][gnu-units] compatible exchange rates currencies updater
+
+If you have ever used [GNU units][gnu-units], you may have enjoyed
+it's very smooth user interface and command line arguments
+interpretation. `units` also provides exchange rates currency
+conversions. It does so by reading the file `currency.units`
+(usually located in `/usr/share/units/` in most distributions). The
+`units` program usually is distributed with a python script
+`units_cur` which updates the file `currency.units` with data from
+[https://finance.yahoo.com/](https://finance.yahoo.com/)'s free API.
+
+The purpose of this script is to provide an alternative
+yet compatible currency units updater for GNU units using
+[https://openexchangerates.org](https://openexchangerates.org) (also
+free with registration) API. The advantages in using this script over
+the original `units_cur` are:
+
+- More currencies including digital currencies as well:
+https://docs.openexchangerates.org/docs/supported-currencies
+- Faster and more accurate exchange rates
+using base currencies according to [your
+choice](https://docs.openexchangerates.org/docs/set-base-currency#default-base-currency).
+
+[gnu-units]: https://gnu.org/software/units
+"""
+
+# For Python 2 & 3 compatibility
+from __future__ import absolute_import, division, print_function
+
+# Normal imports
+from argparse import ArgumentParser
+from datetime import date
+from os import linesep
+import sys
+import codecs
+import requests
+
+OUTFILE_NAME = '/usr/share/units/currency.units'
+
+# This exchange rate table lists the currency ISO 4217 codes, their
+# long text names, and any fixed definitions.  If the definition is
+# empty then units_cur will query the server for a value.
+
+
+VERSION = '4.1'
+
+AP = ArgumentParser(
+    description="GNU units compatible currencies information updater"
+    "into the specified filename or if no filename is "
+    "given, the default: '{}'.  The special filename '-' "
+    "will send the currency data to stdout.".format(OUTFILE_NAME),
+)
+
+AP.add_argument(
+    'output_file',
+    default=OUTFILE_NAME,
+    help='the file to update',
+    metavar='filename',
+    nargs='?',
+    type=str,
+)
+
+AP.add_argument(
+    '-V', '--version',
+    action='version',
+    version='%(prog)s version ' + VERSION,
+    help='display units_cur version',
+)
+
+AP.add_argument(
+    '-v', '--verbose',
+    action='store_true',
+    help='display details when fetching currency data',
+)
+
+AP.add_argument(
+    '-k', '--apikey',
+    metavar='APIKEY',
+    nargs=1,
+    required=True,
+    help='API key to use when querying openexchangerates.org'
+)
+
+AP.add_argument(
+    '-a', '--alternative',
+    action='store_true',
+    help='Add alternative unofficial, black market and digital currencies as well',
+)
+
+OUTFILE_NAME = AP.parse_args().output_file
+VERBOSE = AP.parse_args().verbose
+
+API_BASE = 'https://openexchangerates.org/api'
+API_PARAMS = '?app_id=' + AP.parse_args().apikey[0]
+if AP.parse_args().alternative:
+    API_PARAMS = API_PARAMS + '&show_alternative=1'
+
+try:
+    RES = requests.get(API_BASE + '/latest.json' + API_PARAMS)
+    RES.raise_for_status()
+    RATES = RES.json()["rates"]
+except requests.exceptions.RequestException as err:
+    sys.stderr.write('Error connecting openexchangerates.org server:\n{}.\n'.
+                     format(err))
+    exit(1)
+
+try:
+    RES = requests.get(API_BASE + '/currencies.json' + API_PARAMS)
+    RES.raise_for_status()
+    CURRENCIES = RES.json()
+except requests.exceptions.RequestException as err:
+    sys.stderr.write('Error connecting openexchangerates.org server:\n{}.\n'.
+                     format(err))
+    exit(1)
+
+CODESTR = ""
+for c in CURRENCIES.keys():
+    CODESTR = CODESTR + c + "\t" + CURRENCIES[c].replace(" ", "")
+    CODESTR = CODESTR + "\n"
+
+RATESTR = ""
+for r in RATES.keys():
+    RATESTR = RATESTR + CURRENCIES[r].replace(" ", "") + "\t" + "1|" + str(RATES[r]) + " US$"
+    RATESTR = RATESTR + "\n"
+
+try:
+    REQ = requests.get('http://services.packetizer.com/spotprices/?f=json')
+    REQ.raise_for_status()
+    METALS = REQ.json()
+except requests.exceptions.RequestException as err:
+    sys.stderr.write('Error connecting to spotprices server:\n{}\n'.format(err))
+    exit(1)
+
+del METALS['date']
+
+DATESTR = date.today().isoformat()
+
+OZZYSTR = '\n'.join('{:19}{} US$/troyounce'.format(
+    metal + 'price',
+    price,
+    ) for metal, price in METALS.items())
+
+OUTSTR = ("""# ISO Currency Codes
+
+{codestr}
+
+# Currency exchange rates from Open Exchange Rates (openexchangerates.org)
+
+!message Currency exchange rates from openexchangerates.org on {datestr}
+
+{ratestr}
+
+# Precious metals prices from Packetizer (services.packetizer.com/spotprices)
+
+{ozzystr}
+
+""".format(codestr=CODESTR, datestr=DATESTR, ratestr=RATESTR, ozzystr=OZZYSTR)
+         ).replace('\n', linesep)
+
+try:
+    if OUTFILE_NAME == '-':
+        codecs.StreamReader(sys.stdout, codecs.getreader('utf8')).write(OUTSTR)
+    else:
+        with codecs.open(OUTFILE_NAME, 'w', 'utf8') as of:
+            of.write(OUTSTR)
+except IOError as err:
+    sys.stderr.write('Unable to write to output file:\n{}\n'.format(err))
+    exit(1)
