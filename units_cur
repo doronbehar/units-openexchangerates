@@ -36,129 +36,135 @@ import sys
 import codecs
 import requests
 
-OUTFILE_NAME = '/usr/share/units/currency.units'
-
 VERSION = '4.1'
 
-AP = ArgumentParser(
+def main():
+    """
+    main
+    """
+    default_outfile_name = '/usr/share/units/currency.units'
+    argp = ArgumentParser(
     description="GNU units compatible currencies information updater"
     "into the specified filename or if no filename is "
     "given, the default: '{}'.  The special filename '-' "
-    "will send the currency data to stdout.".format(OUTFILE_NAME),
-)
+        "will send the currency data to stdout.".format(default_outfile_name),
+    )
 
-AP.add_argument(
-    'output_file',
-    default=OUTFILE_NAME,
-    help='the file to update',
-    metavar='filename',
-    nargs='?',
-    type=str,
-)
+    argp.add_argument(
+        'output_file',
+        default=default_outfile_name,
+        help='the file to update',
+        metavar='filename',
+        nargs='?',
+        type=str,
+    )
 
-AP.add_argument(
-    '-V', '--version',
-    action='version',
-    version='%(prog)s version ' + VERSION,
-    help='display units_cur version',
-)
+    argp.add_argument(
+        '-V', '--version',
+        action='version',
+        version='%(prog)s version ' + VERSION,
+        help='display units_cur version',
+    )
 
-AP.add_argument(
-    '-v', '--verbose',
-    action='store_true',
-    help='display details when fetching currency data',
-)
+    argp.add_argument(
+        '-v', '--verbose',
+        action='store_true',
+        help='display details when fetching currency data',
+    )
 
-AP.add_argument(
-    '-k', '--apikey',
-    metavar='APIKEY',
-    nargs=1,
-    required=True,
-    help='API key to use when querying openexchangerates.org'
-)
+    argp.add_argument(
+        '-k', '--apikey',
+        metavar='APIKEY',
+        nargs=1,
+        required=True,
+        help='API key to use when querying openexchangerates.org'
+    )
 
-AP.add_argument(
-    '-a', '--alternative',
-    action='store_true',
-    help='Add alternative unofficial, black market and digital currencies as well',
-)
+    argp.add_argument(
+        '-a', '--alternative',
+        action='store_true',
+        help='Add alternative unofficial, black market and digital currencies as well',
+    )
 
-OUTFILE_NAME = AP.parse_args().output_file
-VERBOSE = AP.parse_args().verbose
+    outfile_name = argp.parse_args().output_file or default_outfile_name
+    VERBOSE = argp.parse_args().verbose
 
-API_BASE = 'https://openexchangerates.org/api'
-API_PARAMS = '?app_id=' + AP.parse_args().apikey[0]
-if AP.parse_args().alternative:
-    API_PARAMS = API_PARAMS + '&show_alternative=1'
+    API_BASE = 'https://openexchangerates.org/api'
+    API_PARAMS = '?app_id=' + argp.parse_args().apikey[0]
+    if argp.parse_args().alternative:
+        API_PARAMS = API_PARAMS + '&show_alternative=1'
 
-try:
-    RES = requests.get(API_BASE + '/latest.json' + API_PARAMS)
-    RES.raise_for_status()
-    RATES = RES.json()["rates"]
-except requests.exceptions.RequestException as err:
-    sys.stderr.write('Error connecting openexchangerates.org server:\n{}.\n'.
-                     format(err))
-    exit(1)
+    try:
+        RES = requests.get(API_BASE + '/latest.json' + API_PARAMS)
+        RES.raise_for_status()
+        RATES = RES.json()["rates"]
+    except requests.exceptions.RequestException as err:
+        sys.stderr.write('Error connecting openexchangerates.org server:\n{}.\n'.
+                         format(err))
+        exit(1)
 
-try:
-    RES = requests.get(API_BASE + '/currencies.json' + API_PARAMS)
-    RES.raise_for_status()
-    CURRENCIES = RES.json()
-except requests.exceptions.RequestException as err:
-    sys.stderr.write('Error connecting openexchangerates.org server:\n{}.\n'.
-                     format(err))
-    exit(1)
+    try:
+        RES = requests.get(API_BASE + '/currencies.json' + API_PARAMS)
+        RES.raise_for_status()
+        CURRENCIES = RES.json()
+    except requests.exceptions.RequestException as err:
+        sys.stderr.write('Error connecting openexchangerates.org server:\n{}.\n'.
+                         format(err))
+        exit(1)
 
-CODESTR = ""
-for c in CURRENCIES.keys():
-    CODESTR = CODESTR + c + "\t" + CURRENCIES[c].replace(" ", "")
-    CODESTR = CODESTR + "\n"
+    CODESTR = ""
+    for c in CURRENCIES.keys():
+        CODESTR = CODESTR + c + "\t" + CURRENCIES[c].replace(" ", "")
+        CODESTR = CODESTR + "\n"
 
-RATESTR = ""
-for r in RATES.keys():
-    RATESTR = RATESTR + CURRENCIES[r].replace(" ", "") + "\t" + "1|" + str(RATES[r]) + " US$"
-    RATESTR = RATESTR + "\n"
+    RATESTR = ""
+    for r in RATES.keys():
+        RATESTR = RATESTR + CURRENCIES[r].replace(" ", "") + "\t" + "1|" + str(RATES[r]) + " US$"
+        RATESTR = RATESTR + "\n"
 
-try:
-    REQ = requests.get('http://services.packetizer.com/spotprices/?f=json')
-    REQ.raise_for_status()
-    METALS = REQ.json()
-except requests.exceptions.RequestException as err:
-    sys.stderr.write('Error connecting to spotprices server:\n{}\n'.format(err))
-    exit(1)
+    try:
+        REQ = requests.get('http://services.packetizer.com/spotprices/?f=json')
+        REQ.raise_for_status()
+        METALS = REQ.json()
+    except requests.exceptions.RequestException as err:
+        sys.stderr.write('Error connecting to spotprices server:\n{}\n'.format(err))
+        exit(1)
 
-del METALS['date']
+    del METALS['date']
 
-DATESTR = date.today().isoformat()
+    DATESTR = date.today().isoformat()
 
-OZZYSTR = '\n'.join('{:19}{} US$/troyounce'.format(
-    metal + 'price',
-    price,
-    ) for metal, price in METALS.items())
+    OZZYSTR = '\n'.join('{:19}{} US$/troyounce'.format(
+        metal + 'price',
+        price,
+        ) for metal, price in METALS.items())
 
-OUTSTR = ("""# ISO Currency Codes
+    OUTSTR = ("""# ISO Currency Codes
 
-{codestr}
+    {codestr}
 
-# Currency exchange rates from Open Exchange Rates (openexchangerates.org)
+    # Currency exchange rates from Open Exchange Rates (openexchangerates.org)
 
-!message Currency exchange rates from openexchangerates.org on {datestr}
+    !message Currency exchange rates from openexchangerates.org on {datestr}
 
-{ratestr}
+    {ratestr}
 
-# Precious metals prices from Packetizer (services.packetizer.com/spotprices)
+    # Precious metals prices from Packetizer (services.packetizer.com/spotprices)
 
-{ozzystr}
+    {ozzystr}
 
-""".format(codestr=CODESTR, datestr=DATESTR, ratestr=RATESTR, ozzystr=OZZYSTR)
-         ).replace('\n', linesep)
+    """.format(codestr=CODESTR, datestr=DATESTR, ratestr=RATESTR, ozzystr=OZZYSTR)
+             ).replace('\n', linesep)
 
-try:
-    if OUTFILE_NAME == '-':
-        codecs.StreamReader(sys.stdout, codecs.getreader('utf8')).write(OUTSTR)
-    else:
-        with codecs.open(OUTFILE_NAME, 'w', 'utf8') as of:
-            of.write(OUTSTR)
-except IOError as err:
-    sys.stderr.write('Unable to write to output file:\n{}\n'.format(err))
-    exit(1)
+    try:
+        if outfile_name == '-':
+            codecs.StreamReader(sys.stdout, codecs.getreader('utf8')).write(OUTSTR)
+        else:
+            with codecs.open(outfile_name, 'w', 'utf8') as of:
+                of.write(OUTSTR)
+    except IOError as err:
+        sys.stderr.write('Unable to write to output file:\n{}\n'.format(err))
+        exit(1)
+
+if __name__ == '__main__':
+    main()
