@@ -44,9 +44,9 @@ def main():
     """
     default_outfile_name = '/usr/share/units/currency.units'
     argp = ArgumentParser(
-    description="GNU units compatible currencies information updater"
-    "into the specified filename or if no filename is "
-    "given, the default: '{}'.  The special filename '-' "
+        description="GNU units compatible currencies information updater"
+        "into the specified filename or if no filename is "
+        "given, the default: '{}'.  The special filename '-' "
         "will send the currency data to stdout.".format(default_outfile_name),
     )
 
@@ -87,59 +87,60 @@ def main():
     )
 
     outfile_name = argp.parse_args().output_file or default_outfile_name
-    VERBOSE = argp.parse_args().verbose
+    verbose = argp.parse_args().verbose
 
-    API_BASE = 'https://openexchangerates.org/api'
-    API_PARAMS = '?app_id=' + argp.parse_args().apikey[0]
+    api_base = 'https://openexchangerates.org/api'
+    api_params = '?app_id=' + argp.parse_args().apikey[0]
     if argp.parse_args().alternative:
-        API_PARAMS = API_PARAMS + '&show_alternative=1'
+        api_params = api_params + '&show_alternative=1'
 
     try:
-        RES = requests.get(API_BASE + '/latest.json' + API_PARAMS)
-        RES.raise_for_status()
-        RATES = RES.json()["rates"]
+        res = requests.get(api_base + '/latest.json' + api_params)
+        res.raise_for_status()
+        rates = res.json()["rates"]
     except requests.exceptions.RequestException as err:
         sys.stderr.write('Error connecting openexchangerates.org server:\n{}.\n'.
                          format(err))
         exit(1)
 
     try:
-        RES = requests.get(API_BASE + '/currencies.json' + API_PARAMS)
-        RES.raise_for_status()
-        CURRENCIES = RES.json()
+        res = requests.get(api_base + '/currencies.json' + api_params)
+        res.raise_for_status()
+        currencies = res.json()
     except requests.exceptions.RequestException as err:
         sys.stderr.write('Error connecting openexchangerates.org server:\n{}.\n'.
                          format(err))
         exit(1)
 
-    CODESTR = ""
-    for c in CURRENCIES.keys():
-        CODESTR = CODESTR + c + "\t" + CURRENCIES[c].replace(" ", "")
-        CODESTR = CODESTR + "\n"
+    codestr = ""
+    for currency in currencies.keys():
+        codestr = codestr + currency + "\t" + currencies[currency].replace(" ", "")
+        codestr = codestr + "\n"
 
-    RATESTR = ""
-    for r in RATES.keys():
-        RATESTR = RATESTR + CURRENCIES[r].replace(" ", "") + "\t" + "1|" + str(RATES[r]) + " US$"
-        RATESTR = RATESTR + "\n"
+    ratestr = ""
+    for rate in rates.keys():
+        ratestr = ratestr + currencies[rate].replace(" ", "") +\
+                "\t" + "1|" + str(rates[rate]) + " US$"
+        ratestr = ratestr + "\n"
 
     try:
-        REQ = requests.get('http://services.packetizer.com/spotprices/?f=json')
-        REQ.raise_for_status()
-        METALS = REQ.json()
+        req = requests.get('http://services.packetizer.com/spotprices/?f=json')
+        req.raise_for_status()
+        metals = req.json()
     except requests.exceptions.RequestException as err:
         sys.stderr.write('Error connecting to spotprices server:\n{}\n'.format(err))
         exit(1)
 
-    del METALS['date']
+    del metals['date']
 
-    DATESTR = date.today().isoformat()
+    datestr = date.today().isoformat()
 
-    OZZYSTR = '\n'.join('{:19}{} US$/troyounce'.format(
+    ozzystr = '\n'.join('{:19}{} US$/troyounce'.format(
         metal + 'price',
         price,
-        ) for metal, price in METALS.items())
+        ) for metal, price in metals.items())
 
-    OUTSTR = ("""# ISO Currency Codes
+    outstr = ("""# ISO Currency Codes
 
     {codestr}
 
@@ -153,15 +154,15 @@ def main():
 
     {ozzystr}
 
-    """.format(codestr=CODESTR, datestr=DATESTR, ratestr=RATESTR, ozzystr=OZZYSTR)
+    """.format(codestr=codestr, datestr=datestr, ratestr=ratestr, ozzystr=ozzystr)
              ).replace('\n', linesep)
 
     try:
         if outfile_name == '-':
-            codecs.StreamReader(sys.stdout, codecs.getreader('utf8')).write(OUTSTR)
+            codecs.StreamReader(sys.stdout, codecs.getreader('utf8')).write(outstr)
         else:
-            with codecs.open(outfile_name, 'w', 'utf8') as of:
-                of.write(OUTSTR)
+            with codecs.open(outfile_name, 'w', 'utf8') as outfile:
+                outfile.write(outstr)
     except IOError as err:
         sys.stderr.write('Unable to write to output file:\n{}\n'.format(err))
         exit(1)
