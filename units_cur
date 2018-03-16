@@ -38,11 +38,6 @@ import requests
 
 OUTFILE_NAME = '/usr/share/units/currency.units'
 
-# This exchange rate table lists the currency ISO 4217 codes, their
-# long text names, and any fixed definitions.  If the definition is
-# empty then units_cur will query the server for a value.
-
-
 VERSION = '4.1'
 
 AP = ArgumentParser(
