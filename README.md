@@ -10,7 +10,7 @@ The purpose of this script is to provide an alternative yet compatible currency 
 ### Usage
 
 ```
-usage: units_cur [-h] [-V] [-v] -k APIKEY [-a] [filename]
+usage: units_cur [-h] [-V] -k APIKEY [-a] [filename]
 
 GNU units compatible currencies information updaterinto the specified filename or if no filename is given, the default: '/usr/share/units/currency.units'. The special filename '-' will send the currency data to
 stdout.
@@ -21,10 +21,9 @@ positional arguments:
 optional arguments:
   -h, --help            show this help message and exit
   -V, --version         display units_cur version
-  -v, --verbose         display details when fetching currency data
   -k APIKEY, --apikey APIKEY
                         API key to use when querying openexchangerates.org
-  -a, --alternative     Add alternative unofficial, black market and digital currencies as well
+  -a, --alternative     Add alternative unofficial, black market and digital currenciesas well
 ```
 
 [gnu-units]: https://gnu.org/software/units
