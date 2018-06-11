@@ -38,6 +38,255 @@ import requests
 
 VERSION = '4.1'
 
+KNOWN_CURRENCIES = dict(
+    AED='uaedirham',
+    AFN='afghanafghani',
+    ALL='albanialek',
+    AMD='armeniadram',
+    ANG='netherlandsguilder',  # duplicated in KNOWN_EURO_RATES
+    AOA='angolakwanza',
+    ARS='argentinapeso',
+    ATS='austriaschilling',
+    AUD='australiadollar',
+    AWG='arubaflorin',
+    AZN='azerbaijanmanat',
+    BAM='bosniaconvertiblemark',  # duplicated in KNOWN_EURO_RATES
+    BBD='barbadosdollar',
+    BDT='bangladeshtaka',
+    BEF='belgiumfranc',
+    BGN='bulgarialev',  # duplicated in KNOWN_EURO_RATES
+    BHD='bahraindinar',
+    BIF='burundifranc',
+    BMD='bermudadollar',
+    BND='bruneidollar',
+    BOB='boliviaboliviano',
+    BRL='brazilreal',
+    BSD='bahamasdollar',
+    BTC='bitcoin',
+    BTN='bhutanngultrum',
+    BTS='bitshare',
+    BWP='botswanapula',
+    BYN='belarusruble',
+    BYR='oldbelarusruble',
+    BZD='belizedollar',
+    CAD='canadadollar',
+    CDF='drcfranccongolais',
+    CHF='swissfranc',
+    CLF='ufchileanunitofaccount',
+    CLP='chilepeso',
+    CNH='offshorechinayuan',
+    CNY='chinayuan',
+    COP='colombiapeso',
+    CRC='costaricacolon',
+    CUC='cubanconvertiblepeso',
+    CUP='cubapeso',
+    CVE='capeverdeescudo',  # duplicated in KNOWN_EURO_RATES
+    CYP='cypruspound',
+    CZK='czechkoruna',
+    DASH='dash',
+    DEM='germanymark',
+    DJF='djiboutifranc',
+    DKK='denmarkkrona',
+    DOGE='dogecoin',
+    DOP='dominicanrepublicpeso',
+    DZD='algeriadinar',
+    EAC='earthcoin',
+    EEK='estoniakroon',
+    EGP='egyptpound',
+    EMC='emercoin',
+    ERN='eritreanakfa',
+    ESP='spainpeseta',
+    ETB='ethiopianbirr',
+    ETH='ethereum',
+    EUR='euro',
+    FCT='factom',
+    FIM='finlandmarkka',
+    FJD='fijidollar',
+    FKP='falklandislandspound',
+    FRF='francefranc',
+    FTC='feathercoin',
+    GBP='ukpound',
+    GEL='georgialari',
+    GGP='guernseypound',
+    GHS='ghanacedi',
+    GIP='gibraltarpound',
+    GMD='gambiadalasi',
+    GNF='guineafranc',
+    GRD='greecedrachma',
+    GTQ='guatemalaquetzal',
+    GYD='guyanadollar',
+    HKD='hongkongdollar',
+    HNL='honduraslempira',
+    HRK='croatiakuna',
+    HTG='haitigourde',
+    HUF='hungariaforint',
+    IDR='indonesiarupiah',
+    IEP='irelandpunt',
+    ILS='israelnewshekel',
+    IMP='manxpound',
+    INR='indiarupee',
+    IQD='iraqdinar',
+    IRR='iranrial',
+    ISK='icelandkrona',
+    ITL='italylira',
+    JEP='jerseypound',
+    JMD='jamaicadollar',
+    JOD='jordandinar',
+    JPY='japanyen',
+    KES='kenyaschilling',
+    KGS='kyrgyzstansom',
+    KHR='cambodiariel',
+    KMF='comorosfranc',  # duplicated in KNOWN_EURO_RATES
+    KPW='northkoreawon',
+    KRW='southkoreawon',
+    KWD='kuwaitdinar',
+    KYD='caymanislandsdollar',
+    KZT='kazakhstantenge',
+    LAK='laokip',
+    LBP='lebanonpound',
+    LD='lindendollar',
+    LKR='srilankanrupee',
+    LRD='liberiadollar',
+    LSL='lesotholoti',
+    LTC='litecoin',
+    LTL='lithuanialitas',
+    LUF='luxembourgfranc',
+    LVL='latvialats',
+    LYD='libyadinar',
+    MAD='moroccodirham',
+    MDL='moldovaleu',
+    MGA='madagascarariary',
+    MKD='macedoniadenar',
+    MMK='myanmarkyat',
+    MNT='mongoliatugrik',
+    MOP='macaupataca',
+    MRO='mauritaniaouguiya',
+    MRU='mauritanian',
+    MTL='maltalira',
+    MUR='mauritiusrupee',
+    MVR='maldiverufiyaa',
+    MWK='malawikwacha',
+    MXN='mexicopeso',
+    MYR='malaysiaringgit',
+    MZN='mozambicanmetical',
+    NAD='namibiadollar',
+    NGN='nigerianaira',
+    NIO='nicaraguacordobaoro',
+    NLG='netherlandsguilder',  # duplicated in KNOWN_EURO_RATES
+    NMC='namecoin',
+    NOK='norwaykrone',
+    NPR='nepalrupee',
+    NVC='novacoin',
+    NXT='nxt',
+    NZD='newzealanddollar',
+    OMR='omanrial',
+    PAB='panamabalboa',
+    PEN='perunuevosol',
+    PGK='papuanewguineakina',
+    PHP='philippinepeso',
+    PKR='pakistanrupee',
+    PLN='polandzloty',
+    PPC='peercoin',
+    PTE='portugalescudo',
+    PYG='paraguayguarani',
+    QAR='qatarrial',
+    RON='romanianewlei',
+    RSD='serbiadinar',
+    RUB='russiaruble',
+    RWF='rwandafranc',
+    SAR='saudiarabiariyal',
+    SBD='solomonislandsdollar',
+    SCR='seychellesrupee',
+    SDG='sudanpound',
+    SEK='swedenkrona',
+    SGD='singaporedollar',
+    SHP='sainthelenapound',
+    SIT='sloveniatolar',
+    SKK='slovakiakornua',
+    SLL='sierraleoneleone',
+    SOS='somaliaschilling',
+    SRD='surinamedollar',
+    SSP='southsudanesepound',
+    STD='saotome&principedobra',
+    STN='saotomeandprincipedobra',
+    STR='stellar',
+    SVC='elsalvadorcolon',
+    SYP='syriapound',
+    SZL='swazilandlilangeni',
+    THB='thailandbaht',
+    TJS='tajikistansomoni',
+    TMT='turkmenistanmanat',
+    TND='tunisiadinar',
+    TOP="tongapa'anga",
+    TRY='turkeylira',
+    TTD='trinidadandtobagodollar',
+    TWD='taiwandollar',
+    TZS='tanzaniashilling',
+    UAH='ukrainehryvnia',
+    UGX='ugandaschilling',
+    USD='unitedstatesdollar',
+    UYU='uruguaypeso',
+    UZS='uzbekistansum',
+    VEB='venezuelaoldbolivar',
+    VEF_BLKMKT='blackmarketvenezuelanbolivar',
+    VEF_DICOM='dicomvenezuelanbolivar',
+    VEF_DIPRO='diprovenezuelanbolivar',
+    VEF='venezuelabolivar',
+    VND='vietnamdong',
+    VTC='vertcoin',
+    VUV='vanuatuvatu',
+    WST='samoatala',
+    XAF='centralafricancfafranc',  # duplicated in KNOWN_EURO_RATES
+    XAG='silverounce',  # already defined in definitions.units
+    XAU='goldounce',  # already defined in definitions.units
+    XCD='eastcaribbeandollar',
+    XDR='specialdrawingrights',
+    XMR='monero',
+    XOF='westafricanfranc',  # duplicated in KNOWN_EURO_RATES
+    XPD='palladiumounce',  # already defined in definitions.units
+    XPF='cfpfranc',  # duplicated in KNOWN_EURO_RATES
+    XPM='primecoin',
+    XPT='platinumounce',  # already defined in definitions.units
+    XRP='ripple',
+    YER='yemenrial',
+    ZAR='southafricarand',
+    ZMW='zambiakwacha',
+    ZWL='zimbabwedollar'
+)
+
+KNOWN_EURO_RATES = dict(
+    ATS=13.7603,
+    BEF=40.3399,
+    CYP=0.585274,
+    EEK=15.6466,  # Equals 1|8 germanymark
+    FIM=5.94573,
+    FRF=6.55957,
+    DEM=1.95583,
+    GRD=340.75,
+    IEP=0.787564,
+    ITL=1936.27,
+    LVL=0.702804,
+    LTL=3.4528,
+    LUF=40.3399,
+    MTL=0.4293,
+    SKK=30.1260,
+    SIT=239.640,
+    ESP=166.386,
+    NLG=2.20371,
+    PTE=200.482,
+    CVE=110.265,
+    BGN=1.9558,
+    KMF=491.96775,
+    XOF=655.957,
+    XPF=119.33,
+    XAF=655.957,
+)
+
+KNOWN_ALIAS_CURRENCIES = dict(
+    BAM='germanymark'
+)
+
+
 def main():
     """
     main
@@ -101,7 +350,7 @@ def main():
     try:
         res = requests.get(api_base + '/currencies.json' + api_params)
         res.raise_for_status()
-        currencies = res.json()
+        api_currencies = res.json()
     except requests.exceptions.RequestException as err:
         sys.stderr.write('Error connecting openexchangerates.org server:\n{}.'
                          '\n'.
@@ -109,16 +358,48 @@ def main():
         exit(1)
 
     codestr = ""
-    for currency in currencies.keys():
-        codestr = codestr + \
-                  currency + "\t" + currencies[currency].replace(" ", "") + \
-                  "\n"
+    for currency_code in api_currencies:
+        if currency_code not in ("XAG", "XAU", "XPD", "XPT", "ANG",
+                                 "BAM", "BGN", "CVE", "KMF",
+                                 "NLG", "XAF", "XOF", "XPF"):
+            if currency_code in KNOWN_CURRENCIES:
+                codestr = codestr + \
+                          currency_code + "\t" + \
+                          KNOWN_CURRENCIES[currency_code] + \
+                          "\n"
+            else:
+                del rates[currency_code]
+                sys.stderr.write(
+                    'recieved unknown 3 letter currency code: {} - {}\n'
+                    .format(
+                        currency_code,
+                        api_currencies[currency_code]
+                    ))
+        else:
+            del rates[currency_code]
 
     ratestr = ""
-    for rate in rates.keys():
-        ratestr = ratestr + currencies[rate].replace(" ", "") +\
-                "\t" + "1|" + str(rates[rate]) + " US$"
-        ratestr = ratestr + "\n"
+    for rate in rates:
+        if rate not in ("XAG", "XAU", "XPD", "XPT", "ANG",
+                        "BAM", "BGN", "CVE", "KMF",
+                        "NLG", "XAF", "XOF", "XPF"):
+            ratestr = ratestr + \
+                      KNOWN_CURRENCIES[rate] + "\t" + \
+                      "1|" + str(rates[rate]) + " dollar" + \
+                      '\t# ' + api_currencies[rate] + \
+                      "\n"
+
+    for rate in KNOWN_EURO_RATES:
+        ratestr = ratestr + \
+                  KNOWN_CURRENCIES[rate] + "\t" + \
+                  "1|" + str(KNOWN_EURO_RATES[rate]) + " euro" + \
+                  "\n"
+
+    for rate in KNOWN_ALIAS_CURRENCIES:
+        ratestr = ratestr + \
+                  KNOWN_CURRENCIES[rate] + "\t" + \
+                  KNOWN_ALIAS_CURRENCIES[rate] + \
+                  "\n"
 
     try:
         req = requests.get('http://services.packetizer.com/spotprices/?f=json')
@@ -144,7 +425,7 @@ def main():
         "# Currency exchange rates from Open Exchange Rates (openexchangerates.org)\n"
         "!message Currency exchange rates from openexchangerates.org on {datestr}\n\n"
 
-        "{ratestr}"
+        "{ratestr}\n"
         "# Precious metals prices from Packetizer (services.packetizer.com/spotprices)\n"
         "{ozzystr}".format(
             codestr=codestr,
