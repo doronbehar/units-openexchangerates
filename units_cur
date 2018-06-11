@@ -77,7 +77,8 @@ def main():
     argp.add_argument(
         '-a', '--alternative',
         action='store_true',
-        help='Add alternative unofficial, black market and digital currencies as well',
+        help='Add alternative unofficial, black market and digital currencies'
+             'as well',
     )
 
     outfile_name = argp.parse_args().output_file or default_outfile_name
@@ -92,7 +93,8 @@ def main():
         res.raise_for_status()
         rates = res.json()["rates"]
     except requests.exceptions.RequestException as err:
-        sys.stderr.write('Error connecting openexchangerates.org server:\n{}.\n'.
+        sys.stderr.write('Error connecting openexchangerates.org server:\n{}.'
+                         '\n'.
                          format(err))
         exit(1)
 
@@ -101,14 +103,16 @@ def main():
         res.raise_for_status()
         currencies = res.json()
     except requests.exceptions.RequestException as err:
-        sys.stderr.write('Error connecting openexchangerates.org server:\n{}.\n'.
+        sys.stderr.write('Error connecting openexchangerates.org server:\n{}.'
+                         '\n'.
                          format(err))
         exit(1)
 
     codestr = ""
     for currency in currencies.keys():
-        codestr = codestr + currency + "\t" + currencies[currency].replace(" ", "")
-        codestr = codestr + "\n"
+        codestr = codestr + \
+                  currency + "\t" + currencies[currency].replace(" ", "") + \
+                  "\n"
 
     ratestr = ""
     for rate in rates.keys():
@@ -121,7 +125,8 @@ def main():
         req.raise_for_status()
         metals = req.json()
     except requests.exceptions.RequestException as err:
-        sys.stderr.write('Error connecting to spotprices server:\n{}\n'.format(err))
+        sys.stderr.write('Error connecting to spotprices server:\n{}\n'
+                         .format(err))
         exit(1)
 
     del metals['date']
@@ -133,22 +138,21 @@ def main():
         price,
         ) for metal, price in metals.items())
 
-    outstr = ("""# ISO Currency Codes
+    outstr = (
+        "# ISO Currency Codes\n"
+        "{codestr}\n"
+        "# Currency exchange rates from Open Exchange Rates (openexchangerates.org)\n"
+        "!message Currency exchange rates from openexchangerates.org on {datestr}\n\n"
 
-    {codestr}
-
-    # Currency exchange rates from Open Exchange Rates (openexchangerates.org)
-
-    !message Currency exchange rates from openexchangerates.org on {datestr}
-
-    {ratestr}
-
-    # Precious metals prices from Packetizer (services.packetizer.com/spotprices)
-
-    {ozzystr}
-
-    """.format(codestr=codestr, datestr=datestr, ratestr=ratestr, ozzystr=ozzystr)
-             ).replace('\n', linesep)
+        "{ratestr}"
+        "# Precious metals prices from Packetizer (services.packetizer.com/spotprices)\n"
+        "{ozzystr}".format(
+            codestr=codestr,
+            datestr=datestr,
+            ratestr=ratestr,
+            ozzystr=ozzystr
+        )
+    ).replace('\n', linesep)
 
     try:
         if outfile_name == '-':
@@ -159,6 +163,7 @@ def main():
     except IOError as err:
         sys.stderr.write('Unable to write to output file:\n{}\n'.format(err))
         exit(1)
+
 
 if __name__ == '__main__':
     main()
