@@ -67,12 +67,6 @@ def main():
     )
 
     argp.add_argument(
-        '-v', '--verbose',
-        action='store_true',
-        help='display details when fetching currency data',
-    )
-
-    argp.add_argument(
         '-k', '--apikey',
         metavar='APIKEY',
         nargs=1,
@@ -87,7 +81,6 @@ def main():
     )
 
     outfile_name = argp.parse_args().output_file or default_outfile_name
-    verbose = argp.parse_args().verbose
 
     api_base = 'https://openexchangerates.org/api'
     api_params = '?app_id=' + argp.parse_args().apikey[0]
